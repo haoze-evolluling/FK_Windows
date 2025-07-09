@@ -38,7 +38,7 @@ def build_exe():
         sys.executable, 
         "-m", 
         "PyInstaller",
-        "--name=Windows优化工具",
+        "--name=FK_WINDOWS-Windows优化工具",
         "--onefile",
         "--windowed",  # 不显示控制台
         "--icon=webicon.ico",  # 使用图标
@@ -49,7 +49,7 @@ def build_exe():
     
     # 执行构建
     subprocess.check_call(build_cmd)
-    print("打包完成！EXE文件位于 dist/Windows优化工具.exe")
+    print("打包完成！EXE文件位于 dist/FK_WINDOWS-Windows优化工具.exe")
 
 if __name__ == "__main__":
     install_dependencies()
