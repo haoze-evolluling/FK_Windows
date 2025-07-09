@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Windows优化工具',
+    name='FK_WINDOWS-Windows优化工具',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
