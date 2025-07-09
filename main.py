@@ -1,14 +1,29 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 import optimizer
+import os
+from PIL import Image, ImageTk  # 添加PIL库用于加载ICO文件
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Windows 优化工具")
         self.geometry("600x500")
-        # 设置应用图标
-        self.iconphoto(True, tk.PhotoImage(file="webicon.ico"))
+        # 设置应用图标 - 使用PIL库加载ico文件
+        try:
+            icon_path = "webicon.ico"
+            # 检查资源文件路径（PyInstaller打包后）
+            if not os.path.exists(icon_path):
+                # 如果是PyInstaller打包的应用，图标可能在不同位置
+                base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+                icon_path = os.path.join(base_path, "webicon.ico")
+            
+            # 加载图标（如果可用）
+            if os.path.exists(icon_path):
+                self.iconbitmap(icon_path)
+        except Exception:
+            # 如果加载图标失败，忽略错误
+            pass
 
         # 创建主框架
         main_frame = ttk.Frame(self, padding="10")
@@ -72,6 +87,7 @@ class App(tk.Tk):
             messagebox.showerror("错误", str(e))
 
 if __name__ == "__main__":
+    import sys
     if not optimizer.is_admin():
         optimizer.run_as_admin()
     else:
