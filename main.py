@@ -12,7 +12,7 @@ class WindowsOptimizerApp(QMainWindow):
         super().__init__()
         
         # 设置窗口属性
-        self.setWindowTitle("Windows 优化工具")
+        self.setWindowTitle("FK_WINDOWS 优化工具")
         self.setFixedSize(700, 650)  # 固定窗口大小，使其无法调整
         
         # 设置应用图标

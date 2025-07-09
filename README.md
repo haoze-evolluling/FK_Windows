@@ -1,4 +1,4 @@
-# Windows优化工具
+# FK_WINDOWS-Windows优化工具
 
 这是一个Windows系统优化工具，提供多种系统优化和管理功能。
 
@@ -28,7 +28,7 @@ python build.py
 ```
 
 3. 打包完成后，可执行文件将位于`dist`文件夹中
-4. 双击`Windows优化工具.exe`即可运行程序
+4. 双击`FK_WINDOWS.exe`即可运行程序
 
 ### 注意事项
 
