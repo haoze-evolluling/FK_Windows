@@ -71,10 +71,7 @@ def clear_system_directories():
         message += f"- 清除了 {result['cleared_count']} 个项目\n"
         if result['errors']:
             message += f"- 错误: {len(result['errors'])} 个\n"
-    
-    if all_errors:
-        message += "\n错误详情:\n" + "\n".join(all_errors)
-    
+        
     return message
 
 # 保留原始函数作为向后兼容
