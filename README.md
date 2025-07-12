@@ -1,4 +1,4 @@
-# FK_WINDOWS-Windows优化工具
+# Windows优化工具
 
 这是一个Windows系统优化工具，提供多种系统优化和管理功能。
 
