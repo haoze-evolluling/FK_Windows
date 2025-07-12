@@ -9,6 +9,8 @@ from update_manager import postpone_updates
 from visual_effects import toggle_transparency
 from bitlocker_utils import disable_bitlocker, disable_all_bitlocker, check_bitlocker_status, get_bitlocker_status, list_available_drives
 from dns_utils import flush_dns_cache
+# 导入激活功能
+from activation_utils import get_windows_versions, get_recommended_version, activate_windows_system, check_windows_activation, get_system_info
 
 # 导出所有功能，保持与原来相同的接口
 __all__ = [
@@ -27,6 +29,12 @@ __all__ = [
     'check_bitlocker_status',
     'get_bitlocker_status',
     'list_available_drives',
-    'flush_dns_cache'
+    'flush_dns_cache',
+    # 添加激活功能
+    'get_windows_versions',
+    'get_recommended_version',
+    'activate_windows_system',
+    'check_windows_activation',
+    'get_system_info'
 ]
 

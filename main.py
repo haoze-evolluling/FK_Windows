@@ -13,7 +13,7 @@ class WindowsOptimizerApp(QMainWindow):
         
         # 设置窗口属性
         self.setWindowTitle("Windows优化工具")
-        self.setFixedSize(700, 650)  # 固定窗口大小，使其无法调整
+        self.setFixedSize(700, 700)  # 固定窗口大小，使其无法调整
         
         # 设置应用图标
         try:
@@ -102,13 +102,20 @@ class WindowsOptimizerApp(QMainWindow):
             ("设置Windows更新暂停天数", lambda: self.run_feature(optimizer.postpone_updates)),
             ("解除BitLocker加密", self.disable_bitlocker)
         ])
-        
+
+        # 系统激活组
+        activation_group = self.create_group_box("系统激活", [
+            ("Windows系统激活", self.activate_windows),
+            ("检查激活状态", lambda: self.run_feature(optimizer.check_windows_activation))
+        ])
+
         # 添加所有组到布局
         groups_layout.addWidget(menu_group)
         groups_layout.addWidget(performance_group)
         groups_layout.addWidget(cleanup_group)
         groups_layout.addWidget(visual_group)
         groups_layout.addWidget(security_group)
+        groups_layout.addWidget(activation_group)
         
         self.main_layout.addLayout(groups_layout)
     
@@ -222,7 +229,88 @@ class WindowsOptimizerApp(QMainWindow):
                 QMessageBox.information(self, "操作结果", result)
         except Exception as e:
             QMessageBox.critical(self, "错误", f"检查BitLocker状态时发生错误: {str(e)}")
-    
+
+    def activate_windows(self):
+        """Windows系统激活功能"""
+        try:
+            # 获取可用的Windows版本
+            versions = optimizer.get_windows_versions()
+            recommended = optimizer.get_recommended_version()
+
+            # 创建版本选择对话框
+            from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, QPushButton, QHBoxLayout
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("选择Windows版本")
+            dialog.setFixedSize(400, 200)
+
+            layout = QVBoxLayout(dialog)
+
+            # 添加说明标签
+            info_label = QLabel("请选择您的Windows版本进行激活：")
+            info_label.setFont(QFont("Microsoft YaHei UI", 10))
+            layout.addWidget(info_label)
+
+            # 添加版本选择下拉框
+            version_combo = QComboBox()
+            version_combo.addItems(versions)
+
+            # 设置推荐版本为默认选择
+            if recommended and recommended in versions:
+                version_combo.setCurrentText(recommended)
+                recommended_label = QLabel(f"推荐版本: {recommended}")
+                recommended_label.setFont(QFont("Microsoft YaHei UI", 9))
+                recommended_label.setStyleSheet("color: #27ae60; font-weight: bold;")
+                layout.addWidget(recommended_label)
+
+            version_combo.setFont(QFont("Microsoft YaHei UI", 10))
+            layout.addWidget(version_combo)
+
+            # 添加按钮
+            button_layout = QHBoxLayout()
+
+            activate_btn = QPushButton("开始激活")
+            activate_btn.setFont(QFont("Microsoft YaHei UI", 10, QFont.Bold))
+            activate_btn.clicked.connect(dialog.accept)
+
+            cancel_btn = QPushButton("取消")
+            cancel_btn.setFont(QFont("Microsoft YaHei UI", 10))
+            cancel_btn.clicked.connect(dialog.reject)
+
+            button_layout.addWidget(activate_btn)
+            button_layout.addWidget(cancel_btn)
+            layout.addLayout(button_layout)
+
+            # 显示对话框
+            if dialog.exec_() == QDialog.Accepted:
+                selected_version = version_combo.currentText()
+
+                # 显示确认对话框
+                reply = QMessageBox.question(
+                    self, "确认激活",
+                    f"您选择激活的版本是: {selected_version}\n\n"
+                    f"激活过程将执行以下步骤:\n"
+                    f"1. 安装产品密钥\n"
+                    f"2. 设置KMS服务器\n"
+                    f"3. 激活Windows\n\n"
+                    f"确定要继续吗？",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+
+                if reply == QMessageBox.Yes:
+                    # 执行激活
+                    success, results = optimizer.activate_windows_system(selected_version)
+
+                    # 显示结果
+                    result_text = "\n".join(results)
+                    if success:
+                        QMessageBox.information(self, "激活成功", f"Windows激活完成！\n\n详细信息:\n{result_text}")
+                    else:
+                        QMessageBox.critical(self, "激活失败", f"Windows激活失败。\n\n详细信息:\n{result_text}")
+
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"激活过程中发生错误: {str(e)}")
+
     def run_feature(self, func, *args):
         """运行优化功能并显示结果"""
         try:
