@@ -106,7 +106,7 @@ class WindowsOptimizerApp(QMainWindow):
         # 系统激活组
         activation_group = self.create_group_box("系统激活", [
             ("Windows系统激活", self.activate_windows),
-            ("检查激活状态", lambda: self.run_feature(optimizer.check_windows_activation))
+            ("检查激活状态", self.check_activation_status)
         ])
 
         # 添加所有组到布局
@@ -311,11 +311,29 @@ class WindowsOptimizerApp(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "错误", f"激活过程中发生错误: {str(e)}")
 
+    def check_activation_status(self):
+        """检查Windows激活状态"""
+        try:
+            # 调用激活状态检查，Windows会自动弹出系统对话框显示状态
+            optimizer.check_windows_activation()
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"检查激活状态时发生错误: {str(e)}")
+
     def run_feature(self, func, *args):
         """运行优化功能并显示结果"""
         try:
             result = func(*args)
-            QMessageBox.information(self, "成功", result)
+
+            # 特殊处理返回元组的函数（如激活状态检查）
+            if isinstance(result, tuple) and len(result) == 2:
+                success, message = result
+                if success:
+                    QMessageBox.information(self, "成功", message)
+                else:
+                    QMessageBox.critical(self, "错误", message)
+            else:
+                # 普通字符串结果
+                QMessageBox.information(self, "成功", result)
         except Exception as e:
             QMessageBox.critical(self, "错误", str(e))
 
