@@ -12,7 +12,7 @@ class WindowsOptimizerApp(QMainWindow):
         super().__init__()
         
         # 设置窗口属性
-        self.setWindowTitle("FK_WINDOWS-Windows优化工具")
+        self.setWindowTitle("Windows优化工具")
         self.setFixedSize(700, 650)  # 固定窗口大小，使其无法调整
         
         # 设置应用图标
@@ -54,7 +54,7 @@ class WindowsOptimizerApp(QMainWindow):
     
     def setup_header(self):
         """创建头部标题区域"""
-        header = QLabel("FK_WINDOWS-Windows优化工具")
+        header = QLabel("Windows优化工具")
         header.setAlignment(Qt.AlignCenter)
         header.setFont(QFont("Microsoft YaHei UI", 16, QFont.Bold))
         
