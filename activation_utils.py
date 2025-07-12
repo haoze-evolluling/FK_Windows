@@ -5,7 +5,6 @@ Windows系统激活工具模块
 
 import subprocess
 import random
-import platform
 import re
 from typing import Dict, List, Tuple, Optional
 
@@ -40,24 +39,156 @@ class WindowsActivator:
     def _get_system_info(self) -> Dict[str, str]:
         """获取当前系统信息"""
         try:
-            # 获取Windows版本信息
-            system_info = platform.platform()
-            version = platform.version()
-            release = platform.release()
+            # 使用多种方法获取详细的Windows版本信息
+            system_info = {}
 
-            return {
-                "platform": system_info,
-                "version": version,
-                "release": release,
-                "full_info": f"{system_info} {version}"
-            }
+            # 方法1: 使用PowerShell获取详细系统信息
+            detailed_info = self._get_detailed_windows_info()
+            system_info.update(detailed_info)
+
+            # 方法2: 使用wmic获取产品信息
+            product_info = self._get_windows_product_info()
+            system_info.update(product_info)
+
+            # 构建完整信息字符串
+            full_info_parts = []
+            if system_info.get("os_name"):
+                full_info_parts.append(system_info["os_name"])
+            if system_info.get("edition"):
+                full_info_parts.append(system_info["edition"])
+            if system_info.get("version_number"):
+                full_info_parts.append(f"版本 {system_info['version_number']}")
+            if system_info.get("build_number"):
+                full_info_parts.append(f"内部版本 {system_info['build_number']}")
+
+            system_info["full_info"] = " ".join(full_info_parts) if full_info_parts else "Unknown"
+
+            return system_info
+
         except Exception as e:
             return {
-                "platform": "Unknown",
-                "version": "Unknown",
-                "release": "Unknown",
                 "full_info": f"获取系统信息失败: {str(e)}"
             }
+
+    def _get_detailed_windows_info(self) -> Dict[str, str]:
+        """使用PowerShell获取详细的Windows信息"""
+        try:
+            # 使用更简单的PowerShell命令格式
+            commands = [
+                # 获取操作系统信息
+                'powershell.exe -NoProfile -Command "Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture | Format-List"',
+                # 备用命令
+                'powershell.exe -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption"',
+            ]
+
+            info = {}
+
+            for command in commands:
+                try:
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=15)
+
+                    if result.returncode == 0 and result.stdout.strip():
+                        output = result.stdout.strip()
+
+                        # 解析Format-List输出
+                        if ':' in output:
+                            lines = output.split('\n')
+                            for line in lines:
+                                if ':' in line:
+                                    key, value = line.split(':', 1)
+                                    key = key.strip()
+                                    value = value.strip()
+
+                                    if 'Caption' in key and value:
+                                        info["os_name"] = value
+                                    elif 'Version' in key and 'BuildNumber' not in key and value:
+                                        info["version_number"] = value
+                                    elif 'BuildNumber' in key and value:
+                                        info["build_number"] = value
+                                    elif 'OSArchitecture' in key and value:
+                                        info["architecture"] = value
+                        else:
+                            # 如果是简单的Caption输出
+                            if "Windows" in output:
+                                info["os_name"] = output
+
+                        # 如果获取到了基本信息就跳出循环
+                        if info.get("os_name"):
+                            break
+
+                except Exception:
+                    continue
+
+            return info
+        except Exception:
+            return {}
+
+    def _get_windows_product_info(self) -> Dict[str, str]:
+        """使用wmic获取Windows产品信息"""
+        try:
+            # 尝试多种wmic命令格式
+            commands = [
+                'wmic os get Caption,Version,BuildNumber /format:list',
+                'wmic os get Caption /format:list',
+                'wmic os get Caption,Version,BuildNumber',
+            ]
+
+            info = {}
+
+            for command in commands:
+                try:
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=15)
+
+                    if result.returncode == 0 and result.stdout.strip():
+                        output = result.stdout.strip()
+
+                        # 解析/format:list输出
+                        if '=' in output:
+                            lines = output.split('\n')
+                            for line in lines:
+                                if '=' in line and line.strip():
+                                    key, value = line.split('=', 1)
+                                    key = key.strip()
+                                    value = value.strip()
+
+                                    if key == 'Caption' and value:
+                                        # 清理Caption信息
+                                        clean_caption = value.replace('Microsoft Windows ', '').replace('Microsoft ', '').strip()
+                                        info["edition"] = clean_caption
+                                        if not info.get("os_name"):
+                                            info["os_name"] = value
+                                    elif key == 'Version' and value:
+                                        info["wmic_version"] = value
+                                    elif key == 'BuildNumber' and value:
+                                        info["wmic_build"] = value
+                                        if not info.get("build_number"):
+                                            info["build_number"] = value
+                        else:
+                            # 解析表格格式输出
+                            lines = output.split('\n')
+                            for line in lines:
+                                line = line.strip()
+                                if not line:
+                                    continue
+
+                                # 查找包含Windows的行
+                                if 'Windows' in line:
+                                    info["os_name"] = line
+                                    # 尝试提取版本信息
+                                    clean_caption = line.replace('Microsoft Windows ', '').replace('Microsoft ', '').strip()
+                                    info["edition"] = clean_caption
+                                    break
+
+                        # 如果获取到了基本信息就跳出循环
+                        if info.get("os_name") or info.get("edition"):
+                            break
+
+                except Exception:
+                    continue
+
+            return info
+        except Exception:
+            return {}
 
     def get_available_versions(self) -> List[str]:
         """获取可用的Windows版本列表"""
@@ -65,28 +196,75 @@ class WindowsActivator:
 
     def get_recommended_version(self) -> Optional[str]:
         """根据当前系统推荐合适的版本"""
-        system_info = self.current_system_info["full_info"].lower()
+        system_info = self.current_system_info
 
-        # 简单的版本匹配逻辑
-        if "windows 11" in system_info:
-            if "enterprise" in system_info or "ltsc" in system_info:
+        # 获取系统信息的各个字段
+        full_info = system_info.get("full_info", "").lower()
+        os_name = system_info.get("os_name", "").lower()
+        edition = system_info.get("edition", "").lower()
+        build_number = system_info.get("build_number", "")
+
+        # 调试信息（可在需要时启用）
+        # print(f"系统信息调试:")
+        # print(f"  完整信息: {full_info}")
+        # print(f"  操作系统: {os_name}")
+        # print(f"  版本: {edition}")
+        # print(f"  内部版本号: {build_number}")
+
+        # 根据内部版本号判断Windows版本
+        try:
+            build_num = int(build_number) if build_number else 0
+        except (ValueError, TypeError):
+            build_num = 0
+
+        # Windows 11 (内部版本号 >= 22000)
+        if build_num >= 22000 or "windows 11" in full_info or "windows 11" in os_name:
+            if any(keyword in edition for keyword in ["enterprise", "企业版"]) or \
+               any(keyword in full_info for keyword in ["enterprise", "ltsc", "企业版"]):
                 return "Windows 11 企业版 LTSC 2024"
-            else:
+            elif any(keyword in edition for keyword in ["pro", "professional", "专业版"]) or \
+                 any(keyword in full_info for keyword in ["pro", "professional", "专业版"]):
                 return "Windows 11 专业版"
-        elif "windows 10" in system_info:
-            if "enterprise" in system_info and "ltsc" in system_info:
-                return "Windows 10 企业版 LTSC 2019"
-            elif "pro for workstations" in system_info:
-                return "Windows 10 专业工作站版"
             else:
+                # 默认推荐专业版
+                return "Windows 11 专业版"
+
+        # Windows 10 (内部版本号 10240-21999)
+        elif build_num >= 10240 or "windows 10" in full_info or "windows 10" in os_name:
+            if any(keyword in edition for keyword in ["enterprise", "企业版"]) and \
+               any(keyword in full_info for keyword in ["ltsc", "2019"]):
+                return "Windows 10 企业版 LTSC 2019"
+            elif any(keyword in edition for keyword in ["pro for workstations", "专业工作站"]) or \
+                 any(keyword in full_info for keyword in ["workstation", "工作站"]):
+                return "Windows 10 专业工作站版"
+            elif any(keyword in edition for keyword in ["pro", "professional", "专业版"]) or \
+                 any(keyword in full_info for keyword in ["pro", "professional", "专业版"]):
                 return "Windows 10 专业版"
-        elif "windows 8" in system_info:
+            else:
+                # 默认推荐专业版
+                return "Windows 10 专业版"
+
+        # Windows 8/8.1
+        elif "windows 8" in full_info or "windows 8" in os_name:
             return "Windows 8 专业版"
-        elif "windows 7" in system_info:
+
+        # Windows 7
+        elif "windows 7" in full_info or "windows 7" in os_name:
             return "Windows 7 专业版"
 
-        # 默认推荐Windows 11专业版
+        # 如果无法识别，根据内部版本号推测
+        elif build_num > 0:
+            if build_num >= 22000:
+                return "Windows 11 专业版"
+            elif build_num >= 10240:
+                return "Windows 10 专业版"
+            else:
+                return "Windows 10 专业版"  # 保守选择
+
+        # 最后的默认选择
         return "Windows 11 专业版"
+
+
 
     def get_random_kms_server(self) -> str:
         """随机选择一个KMS服务器"""
@@ -222,3 +400,5 @@ def get_system_info() -> Dict[str, str]:
     """获取系统信息"""
     activator = WindowsActivator()
     return activator.current_system_info
+
+

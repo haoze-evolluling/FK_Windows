@@ -319,6 +319,8 @@ class WindowsOptimizerApp(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "错误", f"检查激活状态时发生错误: {str(e)}")
 
+
+
     def run_feature(self, func, *args):
         """运行优化功能并显示结果"""
         try:
