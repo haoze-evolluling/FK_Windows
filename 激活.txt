@@ -1,0 +1,36 @@
+powershell命令行
+
+slmgr /ipk {具体的激活密钥}#让用户选择对应的系统版本，从而选择对应的密钥
+slmgr /skms {kms的激活服务器}#从可用的服务器中随机挑选一个
+slmgr /ato
+
+
+Windows 11 企业版 LTSC 2024
+M7XTQ-FN8P6-TTKYV-9D4CC-J462D
+
+Windows 11 专业版
+W269N-WFGWX-YVC9B-4J6C9-T83GX
+
+Windows 10 专业版
+W269N-WFGWX-YVC9B-4J6C9-T83GX
+
+Windows 10 企业版 LTSC 2019
+M7XTQ-FN8P6-TTKYV-9D4CC-J462D
+
+Windows 10 专业工作站版
+NRG8B-VKK3Q-CXVCJ-9G2XF-6Q84J
+
+Windows 8 专业版
+NG4HW-VH26C-733KW-K6F98-J8CK4
+
+Windows 7 专业版
+FJ82H-XT6CR-J8D7P-XQJJ2-GPDD4
+
+kms激活服务器
+
+zh.us.to
+kms.loli.beer
+kms.loli.best
+kms.03k.org
+kms-default.cangshui.net
+kms.cgtsoft.com
